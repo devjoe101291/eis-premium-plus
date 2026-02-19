@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
+﻿import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppLayout from '@/components/layout/AppLayout.vue'
 // import EmployeeDashboardView from '@/views/EmployeeDashboardView.vue'
@@ -7,9 +7,13 @@ import LoginView from '@/views/LoginView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 // import DashboardIcon from '@/components/icons/DashboardIcon.vue'
 import EmployeesIcon from '@/components/icons/EmployeesIcon.vue'
-// import RegisterView from '@/views/RegistrationView.vue'
+import ExamResultIcon from '@/components/icons/ExamResultIcon.vue'
+import CertificateIcon from '@/components/icons/CertificateIcon.vue'
+import RegistrationView from '@/views/RegistrationView.vue'
 import ForgotPasswordView from '@/views/ForgotPasswordView.vue'
 import TopicView from '@/views/TopicView.vue'
+import AdminExamResultsView from '@/views/AdminExamResultsView.vue'
+import CertificateSettingsView from '@/views/CertificateSettingsView.vue'
 // import MaterialDetail from '@/views/MaterialDetail.vue'
 import { Folders } from 'lucide-vue-next'
 import TopicDetail from '@/views/TopicDetail.vue'
@@ -64,14 +68,36 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
-        path: 'topic',
-        name: 'topic',
+        path: 'topics',
+        name: 'topics',
         component: TopicView,
         meta: {
           requiresAuth: true,
           roles: ['admin'],
           title: 'Topics',
           icon: Folders
+        }
+      },
+      {
+        path: 'admin/exam-results',
+        name: 'admin-exam-results',
+        component: AdminExamResultsView,
+        meta: {
+          requiresAuth: true,
+          roles: ['admin'],
+          title: 'Exam Results',
+          icon: ExamResultIcon
+        }
+      },
+      {
+        path: 'admin/certificate-settings',
+        name: 'admin-certificate-settings',
+        component: CertificateSettingsView,
+        meta: {
+          requiresAuth: true,
+          roles: ['admin'],
+          title: 'Certificate Settings',
+          icon: CertificateIcon
         }
       },
       {
@@ -165,12 +191,12 @@ const routes: RouteRecordRaw[] = [
       title: 'Login'
     }
   },
-  //   {
-  //   path: '/register',
-  //   name: 'register',
-  //   component: RegisterView,
-  //   meta: { requiresAuth: false, title: 'Register' }
-  // },
+  {
+    path: '/register',
+    name: 'register',
+    component: RegistrationView,
+    meta: { requiresAuth: false, title: 'Register' }
+  },
     {
     path: '/forgot-password',
     name: 'ForgotPassword',
@@ -215,14 +241,14 @@ export const getNavigationItems = (routes: RouteRecordRaw[]): NavigationItem[] =
       // Show if: requires auth, not hidden, and either has no role restrictions OR user role matches
       return (
         meta?.requiresAuth &&
-        !meta?.hidden &&                // ✅ hide from sidebar
+        !meta?.hidden &&                // âœ… hide from sidebar
         route.name !== 'not-found' &&
-        (routeRoles.length === 0 || routeRoles.includes(userRole ?? ''))  // ✅ role filtering
+        (routeRoles.length === 0 || routeRoles.includes(userRole ?? ''))  // âœ… role filtering
       )
     })
     .map(route => ({
       name: (route.meta as RouteMeta)?.title || String(route.name),
-      to: `/${String(route.path).replace(/^\/+/, '')}`, // ✅ avoids "//" and keeps child path correct
+      to: `/${String(route.path).replace(/^\/+/, '')}`, // âœ… avoids "//" and keeps child path correct
       icon: (route.meta as RouteMeta)?.icon
     }))
 }
@@ -259,7 +285,7 @@ router.beforeEach(async (to, from, next) => {
 
   const requiresAuth = to.matched.some(r => r.meta.requiresAuth)
 
-  // ✅ Ensure auth state is up-to-date (token → user)
+  // âœ… Ensure auth state is up-to-date (token â†’ user)
   if (!authStore.isInitialized) {
     await authStore.checkAuth()
   }
@@ -268,32 +294,32 @@ router.beforeEach(async (to, from, next) => {
   const userRole = authStore.user?.role?.toLowerCase() ?? ''
   const allowedRoles = ((to.meta.roles as string[] | undefined) ?? []).map(r => r.toLowerCase())
 
-  // 🚫 Not authenticated but route requires auth
+  // ðŸš« Not authenticated but route requires auth
   if (requiresAuth && !isAuthed) {
     return next({ name: 'login', query: { redirect: to.fullPath } })
   }
 
-  // ✅ If authenticated but role not loaded yet, DON'T redirect on protected pages
+  // âœ… If authenticated but role not loaded yet, DON'T redirect on protected pages
   // This prevents "refresh bounce" to wrong route while user is hydrating.
   if (requiresAuth && isAuthed && !userRole) {
     return next()
   }
 
-  // 🚫 Authenticated but role not allowed
+  // ðŸš« Authenticated but role not allowed
   if (requiresAuth && allowedRoles.length && !allowedRoles.includes(userRole)) {
     if (userRole === 'admin') return next({ name: 'topic' })
     if (userRole === 'employee') return next({ name: 'employee-materials' })
     return next({ name: 'login' })
   }
 
-  // 🚫 Already logged in → block login page (role-safe)
+  // ðŸš« Already logged in â†’ block login page (role-safe)
   if (to.name === 'login' && isAuthed) {
     if (!userRole) return next() // wait until role exists
 
     if (userRole === 'admin') return next({ name: 'topic' })
     if (userRole === 'employee') return next({ name: 'employee-materials' })
 
-    // ✅ unknown role: don’t force admin
+    // âœ… unknown role: donâ€™t force admin
     return next()
   }
 
@@ -302,3 +328,6 @@ router.beforeEach(async (to, from, next) => {
 
 
 export default router 
+
+
+

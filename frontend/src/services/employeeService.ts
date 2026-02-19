@@ -3,12 +3,21 @@ import api from './api'
 export interface Employee {
   id: number
   name: string
+  first_name?: string
+  last_name?: string
+  username?: string
   email: string
   role: 'admin' | 'employee' | 'student'
   status: 'pending' | 'active' | 'inactive'
   title?: string
   phone?: string
+  date_of_birth?: string
+  gender?: 'male' | 'female' | 'other'
   address?: string
+  street?: string
+  city?: string
+  state?: string
+  zipcode?: string
   profile_picture?: string
   email_verified_at?: string
   created_at: string
@@ -16,24 +25,42 @@ export interface Employee {
 }
 
 export interface CreateEmployeeData {
-  name: string
+  first_name: string
+  last_name: string
+  username: string
   email: string
   password: string
+  password_confirmation?: string
   role?: 'admin' | 'employee' | 'student'
   status?: 'pending' | 'active' | 'inactive'
   title?: string
   phone?: string
+  date_of_birth?: string
+  gender?: 'male' | 'female' | 'other'
   address?: string
+  street?: string
+  city?: string
+  state?: string
+  zipcode?: string
 }
 
 export interface UpdateEmployeeData {
   name?: string
+  first_name?: string
+  last_name?: string
+  username?: string
   email?: string
   role?: 'admin' | 'employee' | 'student'
   status?: 'pending' | 'active' | 'inactive'
   title?: string
   phone?: string
+  date_of_birth?: string
+  gender?: 'male' | 'female' | 'other'
   address?: string
+  street?: string
+  city?: string
+  state?: string
+  zipcode?: string
   profile_picture?: string
 }
 
@@ -55,6 +82,7 @@ export const employeeService = {
     search?: string
     status?: string
     role?: string
+    gender?: 'male' | 'female' | 'other'
   }): Promise<EmployeeListResponse> {
     const response = await api.get<EmployeeListResponse>('/users', { params })
     return response.data

@@ -16,6 +16,12 @@ fs.writeFileSync(manifestPath, processedManifest);
 
 module.exports = defineConfig({
   transpileDependencies: [],
+  
+  // Disable fork-ts-checker to fix webpack compatibility issue
+  chainWebpack: config => {
+    config.plugins.delete('fork-ts-checker');
+  },
+  
   publicPath: process.env.VUE_APP_BASE_URL,
   configureWebpack: {
     devtool: 'source-map',
@@ -79,4 +85,4 @@ module.exports = defineConfig({
       msTileImage: 'icons/web-app-manifest-144x144.png'
     }
   }
-}); 
+});

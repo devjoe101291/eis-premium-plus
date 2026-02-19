@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -16,11 +17,40 @@ class UserController extends Controller
      */
     public function index(): JsonResponse
     {
-        $users = User::paginate(10);
+        $perPage = (int) request()->query('per_page', 10);
+        if ($perPage <= 0) {
+            $perPage = 10;
+        }
+
+        $query = User::query();
+
+        // Default: employees only (hide admins)
+        $role = request()->query('role', 'employee');
+        if (!empty($role)) {
+            $query->where('role', $role);
+        }
+
+        // Optional filters
+        if ($status = request()->query('status')) {
+            $query->where('status', $status);
+        }
+
+        if ($search = request()->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->orderByDesc('updated_at')->paginate($perPage);
 
         return response()->json([
-            'success' => true,
-            'data'    => $users,
+            'data' => UserResource::collection($users->items())->resolve(),
+            'total' => $users->total(),
+            'per_page' => $users->perPage(),
+            'current_page' => $users->currentPage(),
+            'last_page' => $users->lastPage(),
         ]);
     }
 
@@ -131,9 +161,31 @@ class UserController extends Controller
             'data'    => $user,
         ]);
     }
-
     /**
-     * Remove the specified user from storage.
+     * Update the user's status (activate/deactivate).
+     *
+     * PATCH /api/users/{id}/status
+     */
+    public function updateStatus(Request $request, int $id): JsonResponse
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|in:active,inactive,pending',
+        ]);
+
+        $user->update([
+            'status' => $validated['status'],
+        ]);
+
+        return response()->json(UserResource::make($user)->resolve());
+    }    /**     * Remove the specified user from storage.
      *
      * DELETE /api/eis-users/{id}
      */
@@ -156,3 +208,7 @@ class UserController extends Controller
         ]);
     }
 }
+
+
+
+

@@ -19,6 +19,7 @@ export function useEmployees() {
     search?: string
     status?: string
     role?: string
+    gender?: 'male' | 'female' | 'other'
   }) {
     loading.value = true
     error.value = null
@@ -29,15 +30,25 @@ export function useEmployees() {
         per_page: params?.per_page || perPage.value,
         search: params?.search,
         status: params?.status,
-        role: params?.role
+        role: params?.role,
+        gender: params?.gender
       })
 
-      employees.value = response.data
-      total.value = response.total
-      currentPage.value = response.current_page
-      perPage.value = response.per_page
+      // Handle response structure - ensure we have the expected format
+      if (response && response.data) {
+        employees.value = response.data
+        total.value = response.total || 0
+        currentPage.value = response.current_page || 1
+        perPage.value = response.per_page || 10
+      } else {
+        // Fallback if response structure is different
+        employees.value = Array.isArray(response) ? response : []
+        total.value = Array.isArray(response) ? response.length : 0
+      }
     } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch employees'
+      error.value = err.response?.data?.message || err.message || 'Failed to fetch employees'
+      employees.value = []
+      total.value = 0
       throw err
     } finally {
       loading.value = false

@@ -88,7 +88,7 @@ const roleLower = (data.user?.role || role.value || '').toLowerCase()
 
 const defaultHome =
   roleLower === 'employee' ? '/employee-materials' :
-  roleLower === 'admin' ? '/topic' :
+  roleLower === 'admin' ? '/employees' :
   '/login'
 
 // ✅ only allow redirect paths per role
