@@ -9,8 +9,10 @@ use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\MaterialController;
 use App\Http\Controllers\Api\TopicController;
 use App\Http\Controllers\Api\ExamController;
+use App\Http\Controllers\Api\ExamResultController;
+use App\Http\Controllers\Api\CertificateTemplateController;
 
-// System Info
+// System Info (Public)
 Route::get('/version', function (Request $request) {
     return response()->json([
         'laravel_version' => app()->version(),
@@ -18,48 +20,52 @@ Route::get('/version', function (Request $request) {
     ]);
 });
 
-
-
-Route::apiResource('/users', UserController::class);
-
-// Sample Route
+// Sample Route (Public)
 Route::get('/sample', [SampleController::class, 'index']);
-//Auth Route
+
+// Auth Routes (Public)
 Route::post('/login', [AuthController::class, 'login']);
-Route::get('/auth/me', [AuthController::class, 'me']);
-Route::post('/logout', [AuthController::class, 'logout']);
-// Forgot Password Route
+
+// Forgot Password Routes (Public)
 Route::post('/forgot-password', [PasswordResetController::class, 'sendOtp']);
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
 Route::post('/verify-otp', [PasswordResetController::class, 'verifyOtp']);
 
+// Materials download (Public)
 Route::get('materials/{id}/download', [MaterialController::class, 'download']);
-//Material route for test
-// Route::get('/materials', [MaterialController::class, 'index']);
-// Route::post('/materials', [MaterialController::class, 'store']);
-// Route::get('materials/{id}', [MaterialController::class, 'show']);
-// Route::delete('/materials/{id}/', [MaterialController::class, 'destroy']);
 
+// Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::apiResource('users', UserController::class);
+    // Auth
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::get('/profile', [AuthController::class, 'profile']);
-    Route::middleware('auth:sanctum')->get('/materials/stats', [MaterialController::class, 'stats']);
-    //Material route
+    Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Users (Employees)
+    Route::patch('users/{user}/status', [UserController::class, 'updateStatus']);
+    Route::apiResource('users', UserController::class);
+
+    // Materials
+    Route::get('/materials/stats', [MaterialController::class, 'stats']);
     Route::get('/materials', [MaterialController::class, 'index']);
     Route::post('/materials', [MaterialController::class, 'store']);
     Route::get('materials/{id}', [MaterialController::class, 'show']);
-    // allow updates
     Route::put('/materials/{id}', [MaterialController::class, 'update']);
     Route::patch('/materials/{id}', [MaterialController::class, 'update']);
-    Route::delete('/materials/{id}/', [MaterialController::class, 'destroy']);
+    Route::delete('/materials/{id}', [MaterialController::class, 'destroy']);
 
-    // Topic route
+    // Topics
     Route::apiResource('topics', TopicController::class);
 
-    // Exam routes
+    // Exams
     Route::post('/exams/{id}/submit', [ExamController::class, 'submit']);
     Route::apiResource('exams', ExamController::class);
 
+    // Exam Results
+    Route::get('/exam-results', [ExamResultController::class, 'index']);
+
+    // Certificate Settings
+    Route::get('/certificate-settings', [CertificateTemplateController::class, 'show']);
+    Route::put('/certificate-settings', [CertificateTemplateController::class, 'update']);
 });
+

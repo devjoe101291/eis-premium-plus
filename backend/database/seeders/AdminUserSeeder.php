@@ -13,15 +13,28 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        User::firstOrCreate(
+        User::updateOrCreate(
             ['email' => 'admin@example.com'],
             [
                 'name' => 'Administrator',
                 'email' => 'admin@example.com',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('proweaver'),
                 'role' => 'admin',
                 'status' => 'active',
                 'title' => 'System Administrator',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'employee@example.com'],
+            [
+                'name' => 'Employee User',
+                'email' => 'employee@example.com',
+                'password' => Hash::make('proweaver'),
+                'role' => 'employee',
+                'status' => 'active',
+                'title' => 'Employee',
                 'email_verified_at' => now(),
             ]
         );
