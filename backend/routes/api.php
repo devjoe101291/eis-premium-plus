@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\TopicController;
 use App\Http\Controllers\Api\ExamController;
 use App\Http\Controllers\Api\ExamResultController;
 use App\Http\Controllers\Api\CertificateTemplateController;
+use App\Http\Controllers\Api\ProfileController;
 
 // System Info (Public)
 Route::get('/version', function (Request $request) {
@@ -40,6 +41,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+        Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::patch('/profile', [ProfileController::class, 'update']);
+    Route::post('/profile/avatar', [ProfileController::class, 'avatar']);
+    Route::post('/profile/password', [ProfileController::class, 'changePassword']);
 
     // Users (Employees)
     Route::patch('users/{user}/status', [UserController::class, 'updateStatus']);

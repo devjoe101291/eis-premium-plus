@@ -22,6 +22,7 @@ import EmployeeTopicView from '@/views/EmployeeMaterials.vue'
 import EmployeeExamView from '@/views/EmployeeExamView.vue'
 import PaperIcon from '@/components/icons/PaperIcon.vue'
 import TakeExam from '@/views/TakeExam.vue'
+import ProfileView from '@/views/ProfileView.vue'
 
 // Types
 interface NavigationItem {
@@ -120,6 +121,16 @@ const routes: RouteRecordRaw[] = [
           roles: ['employee'],
           title: 'Exams',
           icon: PaperIcon
+        }
+      },
+            {
+        path: 'profile',
+        name: 'profile',
+        component: ProfileView,
+        meta: {
+          requiresAuth: true,
+          title: 'Profile',
+          hidden: true
         }
       },
       {

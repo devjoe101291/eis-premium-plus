@@ -1,51 +1,34 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
     <!-- Sidebar -->
-    <Sidebar v-model:isOpen="isSidebarOpen" :isCollapsed="isSidebarCollapsed" />
+    <Sidebar v-model:isOpen="isSidebarOpen" />
     
-    <div :class="['transition-all duration-300', isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64']">
+    <div class="lg:pl-64">
       <!-- Header -->
-      <header class="sticky top-0 z-40 flex h-20 flex-shrink-0 items-center glass border-b border-gray-200/50 dark:border-gray-700/50 shadow-soft">
-        <div class="flex items-center gap-2 px-2">
-          <!-- Mobile Menu Button -->
-          <button
-            type="button"
-            class="px-4 text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 lg:hidden"
-            @click="toggleSidebar"
+      <header class="sticky top-0 z-40 flex h-16 flex-shrink-0 glass border-b border-gray-200/50 dark:border-gray-700/50 shadow-soft">
+        <!-- Mobile Menu Button -->
+        <button
+          type="button"
+          class="px-4 text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 lg:hidden"
+          @click="toggleSidebar"
+        >
+          <span class="sr-only">Open sidebar</span>
+          <svg
+            class="h-6 w-6"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
           >
-            <span class="sr-only">Open sidebar</span>
-            <svg
-              class="h-6 w-6"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
-
-          <!-- Desktop Collapse Button -->
-          <button
-            type="button"
-            class="hidden h-10 w-10 items-center justify-center rounded-full border border-gray-200/70 bg-white/80 text-gray-600 shadow-sm
-                   transition hover:text-primary hover:shadow-md dark:border-gray-700/60 dark:bg-gray-900/60 dark:text-gray-300
-                   dark:hover:text-primary-dark lg:inline-flex"
-            :title="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-            @click="toggleSidebarCollapse"
-          >
-            <component
-              :is="isSidebarCollapsed ? ChevronRight : ChevronLeft"
-              class="h-4 w-4"
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16"
             />
-          </button>
-        </div>
+          </svg>
+        </button>
 
         <!-- Header Content -->
         <div class="flex flex-1 justify-between px-4">
@@ -64,7 +47,7 @@
                 >
                   <span class="sr-only">Open user menu</span>
                   <div class="h-9 w-9 rounded-full bg-white/20 dark:bg-white/10 backdrop-blur-sm flex items-center justify-center text-white font-semibold ring-2 ring-white/30 dark:ring-white/20">
-                    {{ userFirstLetter }}
+                    {{ userInitials }}
                   </div>
                 </button>
               </div>
@@ -82,29 +65,6 @@
                 </div>
                 <div class="border-t border-gray-200/50 dark:border-gray-700/50 my-1"></div>
                 
-                <!-- Profile Button -->
-                <button
-                  type="button"
-                  class="block w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/80 dark:hover:bg-gray-700/50 focus:outline-none focus:bg-gray-100/80 dark:focus:bg-gray-700/50 transition-colors duration-200 rounded-lg mx-1"
-                  @click="goToProfile"
-                >
-                  <div class="flex items-center">
-                    <svg
-                      class="mr-3 h-5 w-5 text-gray-400 flex-shrink-0"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fill-rule="evenodd"
-                        d="M10 3a3 3 0 100 6 3 3 0 000-6zM4 14a6 6 0 1112 0v1a1 1 0 01-1 1H5a1 1 0 01-1-1v-1z"
-                        clip-rule="evenodd"
-                      />
-                    </svg>
-                    <span class="truncate font-medium">Profile</span>
-                  </div>
-                </button>
-
                 <!-- Theme Toggle -->
                 <button
                   type="button"
@@ -158,19 +118,18 @@
 
 <script setup lang="ts">
 // Imports
-import { ref, computed, onMounted, onUnmounted, provide } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { useClickOutside } from '@/composables/ui/useClickOutside'
+import { useUser } from '@/composables/auth/useUser'
 import { useLogin } from '@/composables/auth/useLogin'
 import Sidebar from './Sidebar.vue'
-import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
 // Store Instances
 const authStore = useAuthStore()
 const themeStore = useThemeStore()
-const router = useRouter()
+const { userInitials } = useUser()
 // const { handleLogout } = useLogin()
 
 const role = ref('')
@@ -183,19 +142,11 @@ const { handleLogout } = useLogin({ role, email, password, rememberMe })
 // State
 const isProfileOpen = ref(false)
 const isSidebarOpen = ref(false)
-const isSidebarCollapsed = ref(false)
 
 // Computed Properties
 const currentUser = computed(() => authStore.currentUser)
 const isLoading = computed(() => authStore.isLoading)
 const isDarkMode = computed(() => themeStore.isDarkMode)
-const userFirstLetter = computed(() => {
-  const name = currentUser.value?.name?.trim()
-  if (name && name.length > 0) {
-    return name.charAt(0).toUpperCase()
-  }
-  return ''
-})
 
 // Methods
 const toggleProfile = () => {
@@ -210,17 +161,6 @@ const toggleTheme = () => {
   themeStore.toggleTheme()
 }
 
-const toggleSidebarCollapse = () => {
-  isSidebarCollapsed.value = !isSidebarCollapsed.value
-}
-
-const goToProfile = () => {
-  if (router.hasRoute('profile')) {
-    router.push({ name: 'profile' })
-  }
-  isProfileOpen.value = false
-}
-
 // Lifecycle Hooks
 const { handleClickOutside } = useClickOutside(isProfileOpen)
 
@@ -231,7 +171,4 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
-
-provide('isSidebarCollapsed', isSidebarCollapsed)
-provide('toggleSidebarCollapse', toggleSidebarCollapse)
 </script> 

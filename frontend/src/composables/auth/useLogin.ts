@@ -55,6 +55,8 @@ export function useLogin({ role, email, password, rememberMe }: UseLoginArgs) {
 
     loading.value = true
     try {
+      // await api.get('/sanctum/csrf-cookie')
+      
       const { data } = await api.post('/login', {
         email: email.value,
         password: password.value,
