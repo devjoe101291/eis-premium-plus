@@ -28,13 +28,22 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
+        'username',
         'email',
         'password',
         'role',
         'status',
         'title',
         'phone',
+        'date_of_birth',
+        'gender',
         'address',
+        'street',
+        'city',
+        'state',
+        'zipcode',
         'profile_picture',
     ];
 
@@ -66,7 +75,7 @@ class User extends Authenticatable
      */
     public function materials(): HasMany
     {
-        return $this->hasMany(Material::class, 'created_by');
+        return $this->hasMany(Material::class , 'created_by');
     }
 
     /**
@@ -74,7 +83,7 @@ class User extends Authenticatable
      */
     public function createdExams(): HasMany
     {
-        return $this->hasMany(Exam::class, 'created_by');
+        return $this->hasMany(Exam::class , 'created_by');
     }
 
     /**

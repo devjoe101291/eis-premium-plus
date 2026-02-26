@@ -7,6 +7,7 @@ export function useEmployees() {
   const loading = ref(false)
   const error = ref<string | null>(null)
   const total = ref(0)
+  const stats = ref({ total: 0, active: 0, inactive: 0, pending: 0 })
   const currentPage = ref(1)
   const perPage = ref(10)
 
@@ -37,6 +38,9 @@ export function useEmployees() {
       // Handle response structure - ensure we have the expected format
       if (response && response.data) {
         employees.value = response.data
+        if (response.stats) {
+          stats.value = response.stats
+        }
         total.value = response.total || 0
         currentPage.value = response.current_page || 1
         perPage.value = response.per_page || 10
@@ -157,6 +161,7 @@ export function useEmployees() {
     loading,
     error,
     total,
+    stats,
     currentPage,
     perPage,
     hasEmployees,

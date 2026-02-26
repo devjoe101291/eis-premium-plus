@@ -17,7 +17,7 @@ class UserController extends Controller
      */
     public function index(): JsonResponse
     {
-        $perPage = (int) request()->query('per_page', 10);
+        $perPage = (int)request()->query('per_page', 10);
         if ($perPage <= 0) {
             $perPage = 10;
         }
@@ -38,15 +38,31 @@ class UserController extends Controller
         if ($search = request()->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('username', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('username', 'like', "%{$search}%");
             });
         }
 
         $users = $query->orderByDesc('updated_at')->paginate($perPage);
 
+        // Compute stats for all users matching the role (ignoring pagination, search, or status filters)
+        $statsQuery = User::query();
+        if (!empty($role)) {
+            $statsQuery->where('role', $role);
+        }
+        $totalUsers = (clone $statsQuery)->count();
+        $activeUsers = (clone $statsQuery)->where('status', 'active')->count();
+        $inactiveUsers = (clone $statsQuery)->where('status', 'inactive')->count();
+        $pendingUsers = (clone $statsQuery)->where('status', 'pending')->count();
+
         return response()->json([
             'data' => UserResource::collection($users->items())->resolve(),
+            'stats' => [
+                'total' => $totalUsers,
+                'active' => $activeUsers,
+                'inactive' => $inactiveUsers,
+                'pending' => $pendingUsers,
+            ],
             'total' => $users->total(),
             'per_page' => $users->perPage(),
             'current_page' => $users->currentPage(),
@@ -75,19 +91,24 @@ class UserController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:eis_users,email',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'username' => 'required|string|unique:eis_users,username',
+            'email' => 'required|email|unique:eis_users,email',
             'password' => 'required|string|min:8',
+            'status' => 'sometimes|string|in:active,inactive,pending',
         ]);
 
         $validated['password'] = bcrypt($validated['password']);
+        $validated['name'] = $validated['first_name'] . ' ' . $validated['last_name']; // Optional fallback for legacy components
+        $validated['status'] = $validated['status'] ?? 'active'; // Default to active
 
         $user = User::create($validated);
 
         return response()->json([
             'success' => true,
             'message' => 'User created successfully',
-            'data'    => $user,
+            'data' => $user,
         ], 201);
     }
 
@@ -109,7 +130,7 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $user,
+            'data' => $user,
         ]);
     }
 
@@ -144,8 +165,10 @@ class UserController extends Controller
         }
 
         $validated = $request->validate([
-            'name'     => 'sometimes|required|string|max:255',
-            'email'    => 'sometimes|required|email|unique:eis_users,email,' . $user->id,
+            'first_name' => 'sometimes|required|string|max:255',
+            'last_name' => 'sometimes|required|string|max:255',
+            'username' => 'sometimes|required|string|unique:eis_users,username,' . $user->id,
+            'email' => 'sometimes|required|email|unique:eis_users,email,' . $user->id,
             'password' => 'sometimes|required|string|min:8',
         ]);
 
@@ -153,12 +176,19 @@ class UserController extends Controller
             $validated['password'] = bcrypt($validated['password']);
         }
 
+        // Construct optional native fallback
+        if (isset($validated['first_name']) || isset($validated['last_name'])) {
+            $currentFirst = $validated['first_name'] ?? $user->first_name;
+            $currentLast = $validated['last_name'] ?? $user->last_name;
+            $validated['name'] = trim($currentFirst . ' ' . $currentLast);
+        }
+
         $user->update($validated);
 
         return response()->json([
             'success' => true,
             'message' => 'User updated successfully',
-            'data'    => $user,
+            'data' => $user,
         ]);
     }
     /**
@@ -185,10 +215,10 @@ class UserController extends Controller
         ]);
 
         return response()->json(UserResource::make($user)->resolve());
-    }    /**     * Remove the specified user from storage.
-     *
-     * DELETE /api/eis-users/{id}
-     */
+    } /**     * Remove the specified user from storage.
+  *
+  * DELETE /api/eis-users/{id}
+  */
     public function destroy(int $id): JsonResponse
     {
         $user = User::find($id);
@@ -208,7 +238,3 @@ class UserController extends Controller
         ]);
     }
 }
-
-
-
-

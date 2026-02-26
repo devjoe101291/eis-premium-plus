@@ -18,7 +18,7 @@
                  w-full max-w-3xl
                  shadow-2xl
                  my-4 sm:my-8
-                 max-h-[95vh] sm:max-h-none
+                 max-h-[95vh] sm:max-h-[90vh]
                  flex flex-col
                  overflow-hidden"
         >

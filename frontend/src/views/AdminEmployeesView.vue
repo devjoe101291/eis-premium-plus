@@ -1,5 +1,5 @@
-﻿<template>
-  <div class="space-y-6 sm:space-y-8 px-8">
+<template>
+  <div class="space-y-6 sm:space-y-8 px-4 sm:px-8">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
       <div>
@@ -16,6 +16,34 @@
         <Plus class="h-5 w-5 mr-2" />
         Add New Employee
       </button>
+    </div>
+
+    <!-- STATS BAR -->
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-6">
+      <StatCard
+        label="Total Employees"
+        :value="stats.total"
+        :icon="Users"
+        color="bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400"
+      />
+      <StatCard
+        label="Active"
+        :value="stats.active"
+        :icon="UserCheck"
+        color="bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+      />
+      <StatCard
+        label="Inactive"
+        :value="stats.inactive"
+        :icon="UserX"
+        color="bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400"
+      />
+      <StatCard
+        label="Pending"
+        :value="stats.pending"
+        :icon="Clock"
+        color="bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400"
+      />
     </div>
 
     <!-- Search and Filters -->
@@ -140,7 +168,7 @@
 
     <!-- View/Edit Modal -->
     <EmployeeModal :is-open="showModal || showCreateModal" :employee="selectedEmployee" :edit-mode="editMode"
-      @close="closeModalOrCreateModal" @save="handleSave" @update="handleUpdate" />
+      @close="closeModalOrCreateModal" @save="handleSave" @update="handleUpdate" @edit="handleEdit" />
 
     <!-- Delete Confirmation Modal -->
     <Modal v-model="showDeleteConfirm" title="Delete Employee">
@@ -166,7 +194,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Plus, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { Plus, Loader2, AlertCircle, ChevronLeft, ChevronRight, Users, UserCheck, UserX, Clock } from 'lucide-vue-next'
 import { useTitle } from '@/composables/ui/useTitle'
 import { useToast } from '@/composables/ui/useToast'
 import { useEmployees } from '@/composables/useEmployees'
@@ -175,7 +203,8 @@ import FilterDropdown from '@/components/ui/FilterDropdown.vue'
 import EmployeeTable from '@/components/employees/EmployeeTable.vue'
 import EmployeeModal from '@/components/employees/EmployeeModal.vue'
 import Modal from '@/components/layout/Modal.vue'
-import type { Employee, CreateEmployeeData, UpdateEmployeeData } from '@/services/employeeService'
+import StatCard from '@/components/layout/StatCard.vue'
+import type { Employee, CreateEmployeeData } from '@/services/employeeService'
 
 const appTitle = computed(() => process.env.VUE_APP_TITLE || 'SP Team Template')
 useTitle(`${appTitle.value} - Employees`)
@@ -188,6 +217,7 @@ const {
   loading,
   error,
   total,
+  stats,
   currentPage,
   perPage,
   totalPages,
@@ -235,10 +265,15 @@ const handleView = async (id: number) => {
   try {
     await fetchEmployee(id)
     selectedEmployee.value = currentEmployee.value
+    editMode.value = false
     showModal.value = true
   } catch (err) {
     console.error('Failed to fetch employee:', err)
   }
+}
+
+const handleEdit = () => {
+  editMode.value = true
 }
 
 
@@ -498,4 +533,6 @@ onMounted(async () => {
   }
 })
 </script>
+
+
 

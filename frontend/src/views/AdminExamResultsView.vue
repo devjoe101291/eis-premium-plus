@@ -57,6 +57,9 @@
         <!-- Exam Results Table -->
         <ExamResultTable v-else :examResults="examResults" @view="handleView" />
 
+        <!-- Exam Result Details Modal -->
+        <AdminExamResultModal v-model:isOpen="isModalOpen" :result="selectedResult" />
+
         <!-- Pagination -->
         <div v-if="!loading && !error && total > 0"
             class="card border border-gray-200/50 dark:border-gray-700/50 shadow-sm">
@@ -138,6 +141,8 @@ import { useAdminExamResults } from '@/composables/useAdminExamResults'
 import SearchBar from '@/components/ui/SearchBar.vue'
 import FilterDropdown from '@/components/ui/FilterDropdown.vue'
 import ExamResultTable from '@/components/exam-results/ExamResultTable.vue'
+import AdminExamResultModal from '@/components/exam-results/AdminExamResultModal.vue'
+import type { ExamResult } from '@/services/examResultServices'
 
 const appTitle = computed(() => process.env.VUE_APP_TITLE || 'SP Team Template')
 useTitle(`${appTitle.value} - Exam Results`)
@@ -159,6 +164,9 @@ const {
 
 const searchQuery = ref('')
 const statusFilter = ref<'all' | 'passed' | 'failed' | 'pending'>('all')
+
+const isModalOpen = ref(false)
+const selectedResult = ref<ExamResult | null>(null)
 
 const statusOptions = [
     { value: 'all', label: 'All Results' },
@@ -191,15 +199,12 @@ const handleFilter = async () => {
     }
 }
 
-/**
- * NOTE:
- * Your ExamResult does NOT have a single "id".
- * So your row/card should emit (employeeId, examId) OR you just route to a detail page.
- */
-const handleView = (employeeId: number, examId: number) => {
-    // Example route:
-    // router.push({ name: 'AdminExamResultDetail', params: { employeeId, examId } })
-    console.log('View exam result:', { employeeId, examId })
+const handleView = (resultId: number) => {
+    const result = examResults.value.find(r => r.result_id === resultId)
+    if (result) {
+        selectedResult.value = result
+        isModalOpen.value = true
+    }
 }
 
 const goToPage = async (page: number) => {

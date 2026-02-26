@@ -66,6 +66,12 @@ export interface UpdateEmployeeData {
 
 export interface EmployeeListResponse {
   data: Employee[]
+  stats?: {
+    total: number
+    active: number
+    inactive: number
+    pending: number
+  }
   total: number
   per_page: number
   current_page: number

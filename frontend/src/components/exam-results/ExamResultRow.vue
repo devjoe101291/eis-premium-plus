@@ -4,26 +4,20 @@
         <div class="text-sm font-semibold text-primary-text dark:text-primary-dark-text">
           {{ examResult.employee_name || 'Unknown' }}
         </div>
-        <div class="text-xs text-secondary-text/70 dark:text-secondary-dark-text/70">
+        <!-- <div class="text-xs text-secondary-text/70 dark:text-secondary-dark-text/70">
           {{ examResult.employee_username }}
-        </div>
+        </div> -->
       </td>
 
       <td class="px-6 py-4 whitespace-nowrap">
         <div class="text-sm font-semibold text-primary-text dark:text-primary-dark-text">
           {{ examResult.exam_name }}
         </div>
-        <div class="text-xs text-secondary-text/70 dark:text-secondary-dark-text/70">
-          Exam ID: {{ examResult.exam_id }}
-        </div>
       </td>
   
       <td class="px-6 py-4 whitespace-nowrap">
         <div class="text-sm text-secondary-text/80 dark:text-secondary-dark-text/80">
           {{ examResult.module_name }}
-        </div>
-        <div class="text-xs text-secondary-text/60 dark:text-secondary-dark-text/60">
-          Module ID: {{ examResult.module_id }}
         </div>
       </td>
   
@@ -55,7 +49,7 @@
       <td class="px-6 py-4 whitespace-nowrap text-right">
         <div class="flex items-center justify-end space-x-2">
           <button
-            @click="$emit('view', examResult.fk_employee_id, examResult.fk_exam_id)"
+            @click="$emit('view', examResult.result_id)"
             class="p-2.5 rounded-lg text-primary/70 dark:text-primary-dark/70 hover:text-primary dark:hover:text-primary-dark hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-all duration-200 hover:scale-110"
             title="View Details"
           >
@@ -77,7 +71,7 @@
   }>()
   
   defineEmits<{
-    (e: 'view', employeeId: number, examId: number): void
+    (e: 'view', resultId: number): void
   }>()
   
   const scorePercent = computed(() => {

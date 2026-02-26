@@ -37,7 +37,7 @@
   
         <div class="flex items-center space-x-2 ml-4 flex-shrink-0">
           <button
-            @click="$emit('view', examResult.fk_employee_id, examResult.fk_exam_id)"
+            @click="$emit('view', examResult.result_id)"
             class="p-2.5 rounded-lg text-primary/70 dark:text-primary-dark/70 hover:text-primary dark:hover:text-primary-dark hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-all duration-200 hover:scale-110"
             title="View Details"
           >
@@ -53,12 +53,12 @@
   import type { ExamResult } from '@/services/examResultServices'
   import StatusBadge from './StatusBadge.vue'
   
-  const props = defineProps<{
+  defineProps<{
     examResult: ExamResult
   }>()
   
   defineEmits<{
-    (e: 'view', employeeId: number, examId: number): void
+    (e: 'view', resultId: number): void
   }>()
   
   const formatDate = (dateString: string): string => {

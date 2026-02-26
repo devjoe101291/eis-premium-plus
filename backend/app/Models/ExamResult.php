@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ExamResult extends Model
 {
     protected $table = 'eis_exam_results';
+    protected $primaryKey = 'result_id';
 
     protected $fillable = [
         'user_id',

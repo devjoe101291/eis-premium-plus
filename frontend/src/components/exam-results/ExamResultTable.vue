@@ -68,9 +68,9 @@
           <tbody class="bg-white dark:bg-gray-900/50 divide-y divide-gray-200/50 dark:divide-gray-700/50">
             <ExamResultRow
               v-for="examResult in examResults"
-              :key="`${examResult.fk_employee_id}-${examResult.fk_exam_id}`"
+              :key="examResult.result_id"
               :examResult="examResult"
-              @view="(employeeId, examId) => $emit('view', employeeId, examId)"
+              @view="(resultId) => $emit('view', resultId)"
             />
           </tbody>
         </table>
@@ -80,9 +80,9 @@
       <div class="lg:hidden divide-y divide-gray-200/50 dark:divide-gray-700/50">
         <ExamResultCard
           v-for="examResult in examResults"
-          :key="`${examResult.fk_employee_id}-${examResult.fk_exam_id}`"
+          :key="examResult.result_id"
           :examResult="examResult"
-          @view="(employeeId, examId) => $emit('view', employeeId, examId)"
+          @view="(resultId) => $emit('view', resultId)"
         />
       </div>
   
@@ -117,7 +117,7 @@ withDefaults(
 )
 
 defineEmits<{
-  (e: 'view', employeeId: number, examId: number): void
+  (e: 'view', resultId: number): void
 }>()
 </script>
 
