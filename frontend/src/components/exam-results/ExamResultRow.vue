@@ -47,7 +47,7 @@
       </td>
   
       <td class="px-6 py-4 whitespace-nowrap text-right">
-        <div class="flex items-center justify-end space-x-2">
+        <div class="flex items-center justify-start space-x-2">
           <button
             @click="$emit('view', examResult.result_id)"
             class="p-2.5 rounded-lg text-primary/70 dark:text-primary-dark/70 hover:text-primary dark:hover:text-primary-dark hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-all duration-200 hover:scale-110"
