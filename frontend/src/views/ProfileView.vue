@@ -12,7 +12,7 @@
               <UserCircle class="h-6 w-6" />
             </div>
             <div>
-              <h1 class="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <h1 class="text-4xl font-bold bg-gradient-to-tr from-primary to-secondary dark:from-primary-light dark:to-secondary-light bg-clip-text text-transparent">
                 Profile
               </h1>
               <p class="text-slate-600 dark:text-slate-400 mt-1">
@@ -73,10 +73,10 @@
                 <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
                   <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
                     <div class="flex items-center gap-2">
-                      <span class="grid h-7 w-7 place-items-center rounded-lg bg-primary/10 text-primary">
+                      <span class="grid h-7 w-7 place-items-center rounded-lg bg-secondary/10 text-secondary">
                         <User class="h-4 w-4" />
                       </span>
-                      <h2 class="text-sm font-semibold text-primary">Personal Details</h2>
+                      <h2 class="text-sm font-semibold text-secondary">Personal Details</h2>
                     </div>
 
                     <button
@@ -92,6 +92,11 @@
 
                   <div class="px-6 py-5">
                     <div class="grid grid-cols-1 gap-x-12 gap-y-6 sm:grid-cols-2">
+                      <!-- <div>
+                        <div class="text-xs font-semibold text-slate-700">Name</div>
+                        <div class="mt-1 text-sm text-slate-600">{{ user.name || '-' }}</div>
+                      </div> -->
+
                       <div>
                         <div class="text-xs font-semibold text-slate-700">First Name</div>
                         <div class="mt-1 text-sm text-slate-600">{{ user.firstName || '-' }}</div>
@@ -106,6 +111,7 @@
                         <div class="text-xs font-semibold text-slate-700">Username</div>
                         <div class="mt-1 text-sm text-slate-600">{{ user.username || '-' }}</div>
                       </div>
+
 
 
                       <div>
@@ -658,6 +664,7 @@ const avatarFillStyle = computed(() => ({
 const modalTitle = computed(() => {
   if (editing.personal) return 'Edit Personal Details'
   if (editing.email) return 'Edit Email'
+
   if (editing.password) return 'Change Password'
   if (editing.avatar) return 'Edit Profile Photo'
   return 'Edit'
@@ -665,14 +672,29 @@ const modalTitle = computed(() => {
 
 const formattedDateOfBirth = computed(() => {
   if (!user.dateOfBirth) return '-'
-  const date = new Date(user.dateOfBirth)
-  if (Number.isNaN(date.getTime())) return '-'
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
+  
+  // Extract date parts directly from ISO string to avoid timezone issues
+  const match = user.dateOfBirth.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!match) {
+    // Fallback to Date parsing if format is different
+    const date = new Date(user.dateOfBirth)
+    if (Number.isNaN(date.getTime())) return '-'
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+  
+  const [, year, month, day] = match
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ]
+  const monthName = monthNames[parseInt(month, 10) - 1]
+  return `${monthName} ${parseInt(day, 10)}, ${year}`
 })
+
 
 const formattedRole = computed(() => {
   const raw = (user.role || '').trim()
@@ -789,8 +811,11 @@ const buildAddress = (street: string, city: string, state: string, zipcode: stri
 }
 
 const syncUserFromProfile = (profile: Profile) => {
-  const baseName = getProfileName(profile) ?? ''
-  const { firstName, lastName } = splitName(baseName)
+  // Prioritize individual first_name/last_name fields from database over combined name field
+  const firstName = profile.first_name ?? ''
+  const lastName = profile.last_name ?? ''
+  const baseName = firstName || lastName ? `${firstName} ${lastName}`.trim() : (profile.name || '')
+
   const address = normalizeAddress(profile)
   user.id = profile.id ?? 0
   user.name = baseName
@@ -937,11 +962,16 @@ const save = async () => {
     payload.first_name = draft.firstName
     payload.last_name = draft.lastName
     payload.username = draft.username
+    payload.street = draft.street
+    payload.city = draft.city
+    payload.state = draft.state
+    payload.zipcode = draft.zipcode
     payload.address = buildAddress(draft.street, draft.city, draft.state, draft.zipcode)
     payload.date_of_birth = draft.dateOfBirth
     payload.gender = draft.gender
     payload.phone = draft.phone
   }
+
   if (editing.email) {
     payload.email = draft.email
   }

@@ -1,7 +1,5 @@
 <template>
 <div class="px-8 py-6 space-y-6">
-  <Skeleton v-if="isLoading && !topicName" variant="page" />
-  <template v-else>
 
     <!-- TOP HEADER CARD -->
     <div
@@ -34,7 +32,7 @@
 
   <h1
     v-else
-    class="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
+    class="text-4xl font-bold bg-gradient-to-tr from-primary to-secondary dark:from-primary-light dark:to-secondary-light bg-clip-text text-transparent"
   >
     {{ topicName }}
   </h1>
@@ -111,46 +109,53 @@
     <!-- ✅ ONE CardTable for both tabs -->
 <CardTable :title="activeTab === 'materials' ? 'Materials' : 'Exams'">
 
+  <!-- Loading Screen -->
+  <LoadingScreen
+    v-if="isCurrentTabLoading"
+    :loading="isCurrentTabLoading"
+    :message="activeTab === 'materials' ? 'Loading materials...' : 'Loading exams...'"
+  />
 
-  <table class="w-full">
+  <template v-else>
+  <table class="min-w-full">
     <!-- ✅ THEAD switches -->
-    <thead class="bg-slate-100 dark:bg-slate-700">
+    <thead class="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent dark:from-primary-dark/10 dark:via-primary-dark/5 dark:to-transparent">
       <tr v-if="activeTab === 'materials'">
-        <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Title</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold uppercase">File Type</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Status</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Description</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Actions</th>
+        <th class="px-6 py-4 text-left text-xs font-bold text-primary-text dark:text-primary-dark-text uppercase tracking-wider">Title</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider">File Type</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider">Status</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider">Description</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider">Actions</th>
       </tr>
 
       <tr v-else>
-        <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Title</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Instructions</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Passing Rate</th>
-        <!-- <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Time Limit (min)</th> -->
-        <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Status</th>
-        <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Actions</th>
+        <th class="px-6 py-4 text-left text-xs font-bold text-primary-text dark:text-primary-dark-text uppercase tracking-wider">Title</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider">Instructions</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider">Passing Rate</th>
+        <!-- <th class="px-6 py-4 text-left text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider">Time Limit (min)</th> -->
+        <th class="px-6 py-4 text-left text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider">Status</th>
+        <th class="px-6 py-4 text-left text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider">Actions</th>
       </tr>
     </thead>
 
     <!-- ✅ TBODY switches -->
-    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+    <tbody class="bg-white dark:bg-slate-900/50 divide-y divide-slate-200/50 dark:divide-slate-700/50">
       <!-- ================= MATERIALS ================= -->
       <template v-if="activeTab === 'materials'">
-<tr v-if="isLoading">
-  <td colspan="5" class="px-6 py-8">
-    <Skeleton variant="table" :rows="5" :cols="5" />
-  </td>
-</tr>
-
-        <tr v-else-if="error">
+        <tr v-if="error">
           <td colspan="5" class="px-6 py-12 text-center text-red-600 dark:text-red-400">
             {{ error }}
           </td>
         </tr>
         <tr v-else-if="filtered.length === 0">
-          <td colspan="5" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
-            No records found
+          <td colspan="5">
+            <div class="text-center py-16 px-4">
+              <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+                <FileText class="w-8 h-8 text-slate-400 dark:text-slate-500" />
+              </div>
+              <p class="text-base font-medium text-slate-600 dark:text-slate-300">No records found</p>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Try adjusting your search or filters</p>
+            </div>
           </td>
         </tr>
         <tr v-else v-for="m in paginated" :key="m.id">
@@ -209,18 +214,20 @@
 
       <!-- ================= EXAMS ================= -->
       <template v-else>
-<tr v-if="isExamsLoading">
-  <td colspan="6" class="px-6 py-8">
-    <Skeleton variant="table" :rows="5" :cols="6" />
-  </td>
-</tr>
-
-       <tr v-else-if="examsError">
+       <tr v-if="examsError">
     <td colspan="6" class="px-6 py-12 text-center text-red-600">{{ examsError }}</td>
   </tr>
 
   <tr v-else-if="topicExams.length === 0">
-    <td colspan="6" class="px-6 py-12 text-center">No exams found for this topic.</td>
+    <td colspan="6">
+      <div class="text-center py-16 px-4">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+          <FileText class="w-8 h-8 text-slate-400 dark:text-slate-500" />
+        </div>
+        <p class="text-base font-medium text-slate-600 dark:text-slate-300">No exams found for this topic</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Try adjusting your search or filters</p>
+      </div>
+    </td>
   </tr>
 <tr v-else v-for="e in examsPaginated" :key="e.id">
   <td class="px-6 py-4 text-primary">{{ e.title }}</td>
@@ -286,9 +293,16 @@
       
     </tbody>
   </table>
+  </template>
 
-<template #footer>
-  <div class="justify-center mt-4">
+</CardTable>
+
+<!-- Pagination outside CardTable -->
+<div
+  v-if="activeTotalItems > 0"
+  class="card border border-gray-200/50 dark:border-gray-700/50 shadow-sm mt-[1em]"
+>
+  <div class="card-body">
     <PaginationBar
       :page="activePage"
       :total-pages="activeTotalPages"
@@ -296,9 +310,7 @@
       @update:page="activePage = $event"
     />
   </div>
-</template>
-
-</CardTable>
+</div>
       <!-- Add / Edit Material Modal (fused) -->
       <Modal v-model="isModalOpen" :title="modalMode === 'add' ? 'Add Material' : 'Edit Material'">
         <div
@@ -480,7 +492,7 @@
     {{ examModalError }}
   </div>
 
-<div v-else class="space-y-5 max-h-[70vh] overflow-y-auto pr-2">
+<div v-else class="space-y-5">
     <!-- Summary row (like screenshot) -->
     <div class="rounded-xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700 p-4 flex flex-wrap gap-6 text-sm">
       <div><b>Time Limit:</b> {{ examModalData.time_limit ?? '—' }} minutes</div>
@@ -628,7 +640,6 @@
   </template>
 </Modal>
 
-  </template>
   </div>
 </template>
 
@@ -657,8 +668,10 @@ import TableControls from '@/components/layout/TableControls.vue'
 import { useSearch } from '@/composables/ui/useSearch'
 import { usePagination } from '@/composables/ui/usePaginations'
 import Skeleton from '@/components/ui/Skeleton.vue'
+import LoadingScreen from '@/components/ui/LoadingScreen.vue'
 import FolderIcon from '@/components/icons/FolderIcon.vue'
 import PaperIcon from '@/components/icons/PaperIcon.vue'
+import { FileText } from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
@@ -790,12 +803,12 @@ const topicExams = computed(() => {
   const tid = Number(topicId.value)
 
   let list = (exams.value || []).filter((e: any) => {
-    const examTopicId = Number(e.topic_id ?? e.fk_topic_id ?? 0)
+    const examTopicId = Number(e.category_id ?? e.topic_id ?? e.fk_topic_id ?? 0)
     return examTopicId === tid
   })
 
-  if (examStatusFilter.value === 'active') list = list.filter((e: any) => !!e.is_active)
-  if (examStatusFilter.value === 'inactive') list = list.filter((e: any) => !e.is_active)
+  if (examStatusFilter.value === 'active') list = list.filter((e: any) => isExamActive(e))
+  if (examStatusFilter.value === 'inactive') list = list.filter((e: any) => !isExamActive(e))
 
   const q = examSearchQuery.value.trim().toLowerCase()
   if (q) {
@@ -859,6 +872,11 @@ const activeTotalItems = computed(() =>
 
 const activeTotalPages = computed(() =>
   activeTab.value === 'materials' ? totalPages.value : examsTotalPages.value
+)
+
+// ✅ computed loading state for the active tab
+const isCurrentTabLoading = computed(() =>
+  activeTab.value === 'materials' ? isLoading.value : isExamsLoading.value
 )
 
 // ✅ reset current tab page when switching tab (nice UX)
@@ -1055,9 +1073,10 @@ const onEdit = (item: Material) => {
     title: item.title || '',
     description: item.description || '',
     source_type: item.file_type === 'file' ? 'file' : 'url',
-    source: null,
+    source: item.file_type === 'url' ? (item.video_link || '') : null,
     is_active: !!item.is_active,
   }
+
 
   isDragOver.value = false
   if (fileInput.value) fileInput.value.value = ''

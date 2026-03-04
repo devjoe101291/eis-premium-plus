@@ -1,11 +1,10 @@
 <template>
 <div class="px-8 py-6 space-y-6">
-  <!-- ✅ PAGE SKELETON -->
-  <Skeleton v-if="isLoading" variant="page" />
+  <!-- 1. THIS IS REQUIRED BEFORE v-else -->
 
-  <template v-else>
+  
     <div class="mb-8">
-      <h1 class="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+      <h1 class="text-4xl font-bold bg-gradient-to-tr from-primary to-secondary dark:from-primary-light dark:to-secondary-light to-secondary bg-clip-text text-transparent">
         Topic Materials
       </h1>
       <p class="text-slate-600 dark:text-slate-400 mt-2">Manage and organize your learning topics</p>
@@ -37,9 +36,14 @@
       </div>
 
       <!-- SEARCH + FILTER + ADD BUTTON -->
-      <TableControls v-model:search="searchQuery" v-model:status="topicStatusFilter">
-        <template #action>
-          <button
+      <TableControls 
+  v-model:search="searchQuery" 
+  v-model:status="topicStatusFilter"
+  :options="myCustomOptions"
+  filterLabel="Topic Status"
+>
+  <template #action>
+    <button
             @click="(modalMode = 'add', isModalOpen = true)"
             class="
               px-6 py-2 rounded-lg font-semibold text-white transition
@@ -51,25 +55,198 @@
           >
             Add New Topic
           </button>
-        </template>
-      </TableControls>
-
+  </template>
+</TableControls>
       <!-- TABLE ONLY -->
-      <div
-        class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm
-               rounded-2xl shadow-lg border border-slate-200/50
-               dark:border-slate-700/50 overflow-hidden"
-      >
+      <div>
         <CardTable title="Topics Management">
-          <!-- Toolbar: search + add button -->
+           <!-- ✅ LOADING SCREEN FOR TABLE ONLY -->
+          <LoadingScreen 
+          :loading="isLoading"
+            v-if="isLoading" 
+            message="Loading topics..." 
+          />
+          <!-- Desktop Table View -->
+           <template v-else>
+          <div class="hidden lg:block overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200/50 dark:divide-slate-700/50">
+              <!-- Gradient Header -->
+              <thead
+                class="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent dark:from-primary-dark/10 dark:via-primary-dark/5 dark:to-transparent"
+              >
+                <tr>
+                  <th
+                    scope="col"
+                    class="px-6 py-4 text-left text-xs font-bold text-primary-text dark:text-primary-dark-text uppercase tracking-wider"
+                  >
+                    Title
+                  </th>
+
+                  <th
+                    scope="col"
+                    class="px-6 py-4 text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider"
+                  >
+                    Description
+                  </th>
+
+                  <th
+                    scope="col"
+                    class="px-6 py-4 text-left text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider"
+                  >
+                    Status
+                  </th>
+
+                  <th
+                    scope="col"
+                    class="px-6 py-4 text-left text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider"
+                  >
+                    Created By
+                  </th>
+
+                  <th
+                    scope="col"
+                    class="px-6 py-4 text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider"
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+
+              <!-- Table Body -->
+              <tbody class="bg-white dark:bg-slate-900/50 divide-y divide-slate-200/50 dark:divide-slate-700/50">
+                <!-- ✅ REMOVED: Table Skeleton -->
+                
+                <!-- REAL ROWS -->
+                <tr v-for="item in filteredPaginatedItems" :key="item.id">
+                  <td class="px-6 py-4 text-sm font-semibold text-primary-text dark:text-primary-dark-text cursor-pointer hover:underline" @click="viewTopic(item.id)">
+                    {{ item.title }}
+                  </td>
+
+                  <td class="text-sm text-secondary-text/80 dark:text-secondary-dark-text/80 max-w-xs truncate">
+                    {{ item.description || '—' }}
+                  </td>
+
+                  <td class="px-6 py-4">
+                    <span
+                      class="px-3 py-1 text-xs font-semibold rounded-full"
+                      :class="item.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                    >
+                      {{ item.is_active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+
+                  <td class="px-6 py-4 text-sm text-secondary-text/80 dark:text-secondary-dark-text/80 max-w-xs">
+                    {{ item.creator?.name || '-' }}
+                  </td>
+
+                  <td class="px-6 py-4 text-center">
+                    <div class="flex justify-center gap-2">
+                      <IconButton title="Edit" variant="primary" @click="onEdit(item)">
+                        <EditIcon :size="16" />
+                      </IconButton>
+
+                      <IconButton
+                        :title="item.is_active ? 'Deactivate' : 'Activate'"
+                        :variant="item.is_active ? 'warning' : 'success'"
+                        @click="toggleStatus(item)"
+                      >
+                        <DeactivateIcon v-if="item.is_active" :size="16" />
+                        <ActivateIcon v-else :size="16" />
+                      </IconButton>
+
+                      <IconButton title="Delete" variant="danger" @click="openDeleteModal(item)">
+                        <DeleteIcon :size="16" />
+                      </IconButton>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- EMPTY STATE -->
+                <!-- ✅ SIMPLIFIED: Removed !isLoading check -->
+                <tr v-if="filteredPaginatedItems.length === 0">
+                  <td colspan="5">
+                    <div class="text-center py-16 px-4">
+                      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+                        <FileText class="w-8 h-8 text-slate-400 dark:text-slate-500" />
+                      </div>
+                      <p class="text-base font-medium text-slate-600 dark:text-slate-300">
+                        No records found
+                      </p>
+                      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        Try adjusting your search or filters
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+</template>
+          <!-- Mobile Card View -->
+          <div class="lg:hidden divide-y divide-slate-200/50 dark:divide-slate-700/50">
+            <!-- ✅ REMOVED: Mobile Skeleton -->
+
+            <!-- Mobile Cards -->
+            <div v-for="item in filteredPaginatedItems" :key="item.id" class="p-4">
+              <div class="flex justify-between items-start mb-2">
+                <span class="font-semibold text-primary cursor-pointer hover:underline" @click="viewTopic(item.id)">
+                  {{ item.title }}
+                </span>
+                <span
+                  class="px-2 py-1 text-xs font-semibold rounded-full"
+                  :class="item.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                >
+                  {{ item.is_active ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mb-2">
+                {{ item.description || '—' }}
+              </p>
+              <p class="text-xs text-slate-400 dark:text-slate-500 mb-3">
+                Created by: {{ item.creator?.name || '-' }}
+              </p>
+              <div class="flex gap-2">
+                <IconButton title="Edit" variant="primary" @click="onEdit(item)">
+                  <EditIcon :size="16" />
+                </IconButton>
+                <IconButton
+                  :title="item.is_active ? 'Deactivate' : 'Activate'"
+                  :variant="item.is_active ? 'warning' : 'success'"
+                  @click="toggleStatus(item)"
+                >
+                  <DeactivateIcon v-if="item.is_active" :size="16" />
+                  <ActivateIcon v-else :size="16" />
+                </IconButton>
+                <IconButton title="Delete" variant="danger" @click="openDeleteModal(item)">
+                  <DeleteIcon :size="16" />
+                </IconButton>
+              </div>
+            </div>
+
+            <!-- Mobile Empty State -->
+            <!-- ✅ SIMPLIFIED: Removed !isLoading check -->
+            <div v-if="filteredPaginatedItems.length === 0" class="text-center py-16 px-4">
+              <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+                <FileText class="w-8 h-8 text-slate-400 dark:text-slate-500" />
+              </div>
+              <p class="text-base font-medium text-slate-600 dark:text-slate-300">
+                No records found
+              </p>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Try adjusting your search or filters
+              </p>
+            </div>
+          </div>
+
+          <!-- Toolbar -->
           <template #toolbar>
             <input
               type="text"
               v-model="searchQuery"
               placeholder="Search..."
               class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600
-                     focus:outline-none focus:ring-2 focus:ring-blue-400
-                     dark:bg-slate-700 dark:text-slate-200"
+             focus:outline-none focus:ring-2 focus:ring-blue-400
+             dark:bg-slate-700 dark:text-slate-200"
             />
             <button
               @click="(modalMode = 'add', isModalOpen = true)"
@@ -78,96 +255,25 @@
               Add New
             </button>
           </template>
-
-          <!-- Table -->
-          <table class="w-full">
-            <thead class="bg-slate-100 dark:bg-slate-700">
-              <tr>
-                <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Title</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Description</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Status</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Created By</th>
-                <th class="px-6 py-4 text-center text-xs font-semibold uppercase">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-              <!-- ✅ TABLE SKELETON -->
-              <tr v-if="isLoading">
-                <td colspan="5" class="px-6 py-8">
-                  <Skeleton variant="table" :rows="5" :cols="5" />
-                </td>
-              </tr>
-
-              <!-- ✅ REAL ROWS -->
-              <tr v-else v-for="item in filteredPaginatedItems" :key="item.id">
-                <td class="px-6 py-4 text-primary cursor-pointer hover:underline" @click="viewTopic(item.id)">
-                  {{ item.title }}
-                </td>
-
-                <td class="px-6 py-4 text-sm truncate max-w-xs">
-                  {{ item.description || '—' }}
-                </td>
-
-                <td class="px-6 py-4">
-                  <span
-                    class="px-3 py-1 text-xs font-semibold rounded-full"
-                    :class="item.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
-                  >
-                    {{ item.is_active ? 'Active' : 'Inactive' }}
-                  </span>
-                </td>
-
-                <td class="px-6 py-4">
-                  {{ item.creator?.name || '-' }}
-                </td>
-
-                <td class="px-6 py-4 text-center">
-                  <div class="flex justify-center gap-2">
-                    <div class="flex items-center justify-center gap-2">
-  <IconButton title="Edit" variant="primary" @click="onEdit(item)">
-    <EditIcon :size="16" />
-  </IconButton>
-
-  <IconButton
-    :title="item.is_active ? 'Deactivate' : 'Activate'"
-    :variant="item.is_active ? 'warning' : 'success'"
-    @click="toggleStatus(item)"
-  >
-    <DeactivateIcon v-if="item.is_active" :size="16" />
-    <ActivateIcon v-else :size="16" />
-  </IconButton>
-
-  <IconButton title="Delete" variant="danger" @click="openDeleteModal(item)">
-    <DeleteIcon :size="16" />
-  </IconButton>
-</div>
-
-                  </div>
-                </td>
-              </tr>
-
-              <!-- ✅ EMPTY STATE -->
-              <tr v-if="!isLoading && filteredPaginatedItems.length === 0">
-                <td colspan="5" class="text-center py-12 text-slate-500">No records found</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <template #footer>
-            <div class="justify-center mt-4">
-              <PaginationBar
-                :page="page"
-                :total-pages="totalPages"
-                :total-items="totalItems"
-                @update:page="page = $event"
-              />
-            </div>
-          </template>
         </CardTable>
+
+        <!-- Pagination -->
+        <div
+          v-if="!isLoading && totalItems > 0"
+          class="card border border-gray-200/50 dark:border-gray-700/50 shadow-sm mt-[1em]"
+        >
+          <div class="card-body">
+            <PaginationBar
+              :page="page"
+              :total-pages="totalPages"
+              :total-items="totalItems"
+              :per-page="perPage"
+              @update:page="page = $event"
+            />
+          </div>
+        </div>
       </div>
     </div>
-  </template>
 </div>
 
   <!-- Add / Edit Topic Modal (fused) -->
@@ -327,7 +433,7 @@ import PaginationBar from '@/components/layout/PaginationBar.vue'
 import type { CreateTopicPayload } from '@/config/types/topic'
 import { topicService } from '@/services/topicServices'
 import { useToast } from '@/composables/ui/useToast'
-import Skeleton from '@/components/ui/Skeleton.vue'
+import LoadingScreen from '@/components/ui/LoadingScreen.vue'
 
 const appTitle = computed(() => process.env.VUE_APP_TITLE || 'SP Team Template')
 useTitle(`${appTitle.value} - Topics`)

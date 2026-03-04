@@ -1,136 +1,231 @@
 <template>
   <div class="px-8 py-6 space-y-6">
-    <!-- ✅ PAGE SKELETON -->
-    <Skeleton v-if="isLoading" variant="page" />
+    <!-- 1. THIS IS REQUIRED BEFORE v-else -->
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold bg-gradient-to-tr from-primary to-secondary dark:from-primary-light dark:to-secondary-light to-secondary bg-clip-text text-transparent">
+        Materials
+      </h1>
+      <p class="text-slate-600 dark:text-slate-400 mt-2">Browse and download available materials</p>
+    </div>
 
-    <template v-else>
-      <!-- TOP HEADER CARD -->
-      <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm
-               rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-700/50
-               px-6 py-5 flex items-center gap-4">
-        <!-- Title -->
-        <div class="min-w-0">
-          <h1 class="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Materials
-          </h1>
-          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Browse and download available materials
-          </p>
-        </div>
+    <div class="space-y-4">
+      <!-- STATS BAR -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <StatCard
+          label="Total Materials"
+          :value="stats.total"
+          :icon="BookIcon"
+          color="bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400"
+        />
+
+        <StatCard
+          label="Files"
+          :value="stats.files"
+          :icon="FileIcon"
+          color="bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+        />
+
+        <StatCard
+          label="Links"
+          :value="stats.links"
+          :icon="LinkIcon"
+          color="bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400"
+        />
       </div>
 
       <!-- SEARCH + FILTER CONTROLS -->
-      <div>
-        <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center sm:justify-between">
-          <input type="text" v-model="searchQuery" placeholder="Search materials..." class="flex-1 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600
-                   focus:outline-none focus:ring-2 focus:ring-blue-400
-                   dark:bg-slate-700 dark:text-slate-200" />
-
-          <!-- Filter by type -->
-          <select v-model="filterType" class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600
-                   dark:bg-slate-700 dark:text-slate-200">
-            <option value="">All Types</option>
-            <option value="file">Files</option>
-            <option value="url">Links</option>
-          </select>
-
-          <!-- Items per page -->
-          <select v-model.number="perPage" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600
-                   dark:bg-slate-700 dark:text-slate-200">
-            <option :value="5">5 / page</option>
-            <option :value="10">10 / page</option>
-            <option :value="15">15 / page</option>
-          </select>
-        </div>
-      </div>
+      <TableControls 
+        v-model:search="searchQuery" 
+        v-model:status="filterType"
+        :options="typeFilterOptions"
+        filterLabel="Material Type"
+      />
 
       <!-- TABLE -->
-      <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm
-               rounded-2xl shadow-lg border border-slate-200/50
-               dark:border-slate-700/50 overflow-hidden">
+      <div>
         <CardTable title="Available Materials">
-          <!-- Table -->
-          <table class="w-full">
-            <thead class="bg-slate-100 dark:bg-slate-700">
-              <tr>
-                <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Title</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Topic</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Type</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Description</th>
-                <th class="px-6 py-4 text-left text-xs font-semibold uppercase">Actions</th>
-              </tr>
-            </thead>
+          <!-- ✅ LOADING SCREEN FOR TABLE ONLY -->
+          <LoadingScreen 
+            :loading="isLoading"
+            v-if="isLoading" 
+            message="Loading materials..." 
+          />
 
-            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-              <!-- ✅ TABLE SKELETON -->
-              <tr v-if="isLoading">
-                <td colspan="5" class="px-6 py-8">
-                  <Skeleton variant="table" :rows="5" :cols="5" />
-                </td>
-              </tr>
+          <!-- Desktop Table View -->
+          <template v-else>
+            <div class="hidden lg:block overflow-x-auto">
+              <table class="min-w-full divide-y divide-slate-200/50 dark:divide-slate-700/50">
+                <!-- Gradient Header -->
+                <thead
+                  class="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent dark:from-primary-dark/10 dark:via-primary-dark/5 dark:to-transparent"
+                >
+                  <tr>
+                    <th
+                      scope="col"
+                      class="px-6 py-4 text-left text-xs font-bold text-primary-text dark:text-primary-dark-text uppercase tracking-wider"
+                    >
+                      Title
+                    </th>
 
-              <!-- ✅ REAL ROWS -->
-              <tr v-else v-for="item in filteredPaginatedItems" :key="item.id"
-                class="hover:bg-slate-50/60 dark:hover:bg-slate-900/20 transition">
-                <td class="px-6 py-4 text-primary font-medium">
-                  {{ item.title }}
-                </td>
+                    <th
+                      scope="col"
+                      class="px-6 py-4 text-left text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider"
+                    >
+                      Topic
+                    </th>
 
-                <td class="px-6 py-4 text-sm">
-                  {{ getTopicTitle(item.topic_id) || '—' }}
-                </td>
+                    <th
+                      scope="col"
+                      class="px-6 py-4 text-left text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider"
+                    >
+                      Type
+                    </th>
 
-                <td class="px-6 py-4 text-sm">
-                  <span class="px-2 py-1 rounded text-xs font-semibold"
-                    :class="item.file_type === 'file' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300' : 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300'">
-                    {{ item.file_type === 'file' ? 'File' : 'Link' }}
-                  </span>
-                </td>
+                    <th
+                      scope="col"
+                      class="px-6 py-4 text-left text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider"
+                    >
+                      Description
+                    </th>
 
-                <td class="px-6 py-4 text-sm truncate max-w-xs">
-                  {{ item.description || '—' }}
-                </td>
+                    <th
+                      scope="col"
+                      class="px-6 py-4 text-center text-xs font-semibold text-primary-text dark:text-primary-dark-text uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
 
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-2">
-                    <!-- ✅ Actions (use your reusable IconButton like the reference) -->
-                    <div class="flex items-center justify-center gap-2">
-                      <!-- View -->
-                      <IconButton title="View" variant="neutral" @click="openMaterial(item)">
-                        <ViewIcon class="h-4 w-[2em]" />
-                      </IconButton>
+                <!-- Table Body -->
+                <tbody class="bg-white dark:bg-slate-900/50 divide-y divide-slate-200/50 dark:divide-slate-700/50">
+                  <!-- REAL ROWS -->
+                  <tr v-for="item in filteredPaginatedItems" :key="item.id">
+                    <td class="px-6 py-4 text-sm font-semibold text-primary-text dark:text-primary-dark-text">
+                      {{ item.title }}
+                    </td>
 
-                      <!-- Download (files only) -->
-                      <IconButton v-if="item.file_type === 'file'" title="Download" variant="neutral"
-                        @click="downloadMaterial(item)">
-                        <DownloadIcon class="h-4 w-[2em]" />
-                      </IconButton>
-                    </div>
+                    <td class="px-6 py-4 text-sm text-secondary-text/80 dark:text-secondary-dark-text/80">
+                      {{ getTopicTitle(item.topic_id) || '—' }}
+                    </td>
 
-                  </div>
-                </td>
-              </tr>
+                    <td class="px-6 py-4">
+                      <span
+                        class="px-3 py-1 text-xs font-semibold rounded-full"
+                        :class="item.file_type === 'file' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300' : 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300'"
+                      >
+                        {{ item.file_type === 'file' ? 'File' : 'Link' }}
+                      </span>
+                    </td>
 
-              <!-- ✅ EMPTY STATE -->
-              <tr v-if="!isLoading && filteredPaginatedItems.length === 0">
-                <td colspan="5" class="text-center py-12 text-slate-500">
-                  No materials found
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                    <td class="px-6 py-4 text-sm text-secondary-text/80 dark:text-secondary-dark-text/80 max-w-xs truncate">
+                      {{ item.description || '—' }}
+                    </td>
 
-          <template #footer>
-            <div class="justify-center mt-4">
-              <PaginationBar :page="page" :total-pages="totalPages" :total-items="totalItems"
-                @update:page="page = $event" />
+                    <td class="px-6 py-4 text-center">
+                      <div class="flex justify-center gap-2">
+                        <!-- View -->
+                        <IconButton title="View" variant="primary" @click="openMaterial(item)">
+                          <ViewIcon :size="16" />
+                        </IconButton>
+
+                        <!-- Download (files only) -->
+                        <IconButton v-if="item.file_type === 'file'" title="Download" variant="neutral"
+                          @click="downloadMaterial(item)">
+                          <DownloadIcon :size="16" />
+                        </IconButton>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- EMPTY STATE -->
+                  <tr v-if="filteredPaginatedItems.length === 0">
+                    <td colspan="5">
+                      <div class="text-center py-16 px-4">
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+                          <FileText class="w-8 h-8 text-slate-400 dark:text-slate-500" />
+                        </div>
+                        <p class="text-base font-medium text-slate-600 dark:text-slate-300">
+                          No records found
+                        </p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                          Try adjusting your search or filters
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </template>
+
+          <!-- Mobile Card View -->
+          <div class="lg:hidden divide-y divide-slate-200/50 dark:divide-slate-700/50">
+            <!-- Mobile Cards -->
+            <div v-for="item in filteredPaginatedItems" :key="item.id" class="p-4">
+              <div class="flex justify-between items-start mb-2">
+                <span class="font-semibold text-primary">
+                  {{ item.title }}
+                </span>
+                <span
+                  class="px-2 py-1 text-xs font-semibold rounded-full"
+                  :class="item.file_type === 'file' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300' : 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300'"
+                >
+                  {{ item.file_type === 'file' ? 'File' : 'Link' }}
+                </span>
+              </div>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mb-2">
+                {{ item.description || '—' }}
+              </p>
+              <p class="text-xs text-slate-400 dark:text-slate-500 mb-3">
+                Topic: {{ getTopicTitle(item.topic_id) || '—' }}
+              </p>
+              <div class="flex gap-2">
+                <IconButton title="View" variant="primary" @click="openMaterial(item)">
+                  <ViewIcon :size="16" />
+                </IconButton>
+                <IconButton v-if="item.file_type === 'file'" title="Download" variant="neutral"
+                  @click="downloadMaterial(item)">
+                  <DownloadIcon :size="16" />
+                </IconButton>
+              </div>
+            </div>
+
+            <!-- Mobile Empty State -->
+            <div v-if="filteredPaginatedItems.length === 0" class="text-center py-16 px-4">
+              <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+                <FileText class="w-8 h-8 text-slate-400 dark:text-slate-500" />
+              </div>
+              <p class="text-base font-medium text-slate-600 dark:text-slate-300">
+                No records found
+              </p>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Try adjusting your search or filters
+              </p>
+            </div>
+          </div>
         </CardTable>
+
+        <!-- Pagination -->
+        <div
+          v-if="!isLoading && totalItems > 0"
+          class="card border border-gray-200/50 dark:border-gray-700/50 shadow-sm mt-[1em]"
+        >
+          <div class="card-body">
+            <PaginationBar
+              :page="page"
+              :total-pages="totalPages"
+              :total-items="totalItems"
+              :per-page="perPage"
+              @update:page="page = $event"
+            />
+          </div>
+        </div>
       </div>
-    </template>
+    </div>
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
@@ -140,12 +235,18 @@ import { useTopics } from '@/composables/useTopics'
 import { useMaterials } from '@/composables/useMaterials'
 import { useSearch } from '@/composables/ui/useSearch'
 import { usePagination } from '@/composables/ui/usePaginations'
+import { useToast } from '@/composables/ui/useToast'
 import api from '@/services/api'
 import ViewIcon from '@/components/icons/ViewIcon.vue'
 import CardTable from '@/components/layout/CardTable.vue'
 import PaginationBar from '@/components/layout/PaginationBar.vue'
-import Skeleton from '@/components/ui/Skeleton.vue'
 import IconButton from '@/components/ui/IconButton.vue'
+import TableControls from '@/components/layout/TableControls.vue'
+import LoadingScreen from '@/components/ui/LoadingScreen.vue'
+import StatCard from '@/components/layout/StatCard.vue'
+import { FileText, BookOpen as BookIcon, File as FileIcon, Link as LinkIcon } from 'lucide-vue-next'
+
+const { error: showError, success: showSuccess } = useToast()
 
 const appTitle = computed(() => process.env.VUE_APP_TITLE || 'SP Team Template')
 useTitle(`${appTitle.value} - Materials`)
@@ -154,7 +255,15 @@ useTitle(`${appTitle.value} - Materials`)
 const isLoading = ref(true)
 
 // ✅ per page
-const perPage = ref(10)
+const perPage = ref(5)
+
+// ✅ Filter options for TableControls
+const typeFilterOptions = [
+  { value: 'all', label: 'All Types' },
+  { value: 'file', label: 'Files' },
+  { value: 'url', label: 'Links' },
+]
+
 
 // ✅ topics data (from composable)
 const { topics, fetchTopics } = useTopics()
@@ -175,13 +284,23 @@ const activeMaterials = computed(() => {
 })
 
 // ✅ filter by type
-const filterType = ref('')
+const filterType = ref('all')
 
 const typeFiltered = computed(() => {
   const list = activeMaterials.value
-  if (!filterType.value) return list
+  if (!filterType.value || filterType.value === 'all') return list
   return list.filter(m => m.file_type === filterType.value)
 })
+
+// ✅ stats
+const stats = computed(() => {
+  const list = activeMaterials.value || []
+  const total = list.length
+  const files = list.filter((m) => m.file_type === 'file').length
+  const links = list.filter((m) => m.file_type === 'url').length
+  return { total, files, links }
+})
+
 
 // ✅ search
 const { query: searchQuery, filtered } = useSearch(() => typeFiltered.value, 'title')
@@ -232,27 +351,33 @@ const openMaterial = (mat: any) => {
 // ✅ download material
 const downloadMaterial = async (material: any) => {
   try {
-    const url = getMaterialUrl(material)
-    if (!url) {
-      console.error('File URL not available for download.')
-      return
-    }
+    if (material.file_type !== 'file') return
+    const res = await api.get(`/materials/${material.id}/download`, { responseType: 'blob' })
+    const blob = new Blob([res.data])
+    const blobUrl = URL.createObjectURL(blob)
+    const filename = material.file_path?.split('/').pop() ?? 'download'
 
-    const link = document.createElement('a')
-    link.href = url
-    link.download = material.title || 'material'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  } catch (error) {
-    console.error('Download failed:', error)
+    const a = document.createElement('a')
+    a.href = blobUrl
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+
+    URL.revokeObjectURL(blobUrl)
+    showSuccess('Download started.')
+  } catch (e: any) {
+    console.error('downloadMaterial failed:', e)
+    showError(e?.response?.data?.message ?? 'Failed to download file.')
   }
 }
+
 
 // ✅ reset page when filters change
 watch([searchQuery, perPage, filterType], () => {
   page.value = 1
 })
+
 
 // ✅ load topics and materials
 const refreshData = async () => {
