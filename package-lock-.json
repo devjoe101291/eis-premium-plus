@@ -2,5 +2,9 @@
   "name": "eis-premium-plus",
   "lockfileVersion": 3,
   "requires": true,
-  "packages": {}
+  "packages": {
+    "": {
+      "name": "eis-premium-plus"
+    }
+  }
 }
