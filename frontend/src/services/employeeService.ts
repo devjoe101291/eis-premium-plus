@@ -98,24 +98,24 @@ export const employeeService = {
    * Get employee by ID
    */
   async getEmployee(id: number): Promise<Employee> {
-    const response = await api.get<Employee>(`/users/${id}`)
-    return response.data
+    const response = await api.get<any>(`/users/${id}`)
+    return response.data?.data || response.data
   },
 
   /**
    * Create new employee
    */
   async createEmployee(data: CreateEmployeeData): Promise<Employee> {
-    const response = await api.post<Employee>('/users', data)
-    return response.data
+    const response = await api.post<any>('/users', data)
+    return response.data?.data || response.data
   },
 
   /**
    * Update employee
    */
   async updateEmployee(id: number, data: UpdateEmployeeData): Promise<Employee> {
-    const response = await api.put<Employee>(`/users/${id}`, data)
-    return response.data
+    const response = await api.put<any>(`/users/${id}`, data)
+    return response.data?.data || response.data
   },
 
   /**

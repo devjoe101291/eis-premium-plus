@@ -4,8 +4,7 @@
       <div class="flex items-center">
         <div
           class="h-12 w-12 rounded-full flex items-center justify-center text-white font-bold shadow-md bg-gradient-to-br"
-          :class="avatarBgClass"
-        >
+          :class="avatarBgClass">
           {{ employeeInitials }}
         </div>
       </div>
@@ -35,34 +34,24 @@
     </td>
     <td class="px-6 py-4 whitespace-nowrap text-right">
       <div class="flex items-center justify-end space-x-2">
-        <button
-          @click="$emit('view', employee.id)"
+        <button @click="handleAction('view', employee.id)"
           class="p-2.5 rounded-lg text-primary/70 dark:text-primary-dark/70 hover:text-primary dark:hover:text-primary-dark hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-all duration-200 hover:scale-110"
-          title="View Details"
-        >
+          title="View Details">
           <ClipboardList class="h-5 w-5" />
         </button>
-        <button
-          v-if="employee.status === 'active'"
-          @click="$emit('deactivate', employee.id)"
+        <button v-if="employee.status === 'active'" @click="handleAction('deactivate', employee.id)"
           class="p-2.5 rounded-lg text-warning/70 dark:text-warning-dark/70 hover:text-warning dark:hover:text-warning-dark hover:bg-warning/10 dark:hover:bg-warning-dark/10 transition-all duration-200 hover:scale-110"
-          title="Deactivate"
-        >
+          title="Deactivate">
           <PowerOff class="h-5 w-5" />
         </button>
-        <button
-          v-else
-          @click="$emit('activate', employee.id)"
+        <button v-else @click="handleAction('activate', employee.id)"
           class="p-2.5 rounded-lg text-success/70 dark:text-success-dark/70 hover:text-success dark:hover:text-success-dark hover:bg-success/10 dark:hover:bg-success-dark/10 transition-all duration-200 hover:scale-110"
-          title="Activate"
-        >
+          title="Activate">
           <Power class="h-5 w-5" />
         </button>
-        <button
-          @click="$emit('delete', employee.id)"
+        <button @click="handleAction('delete', employee.id)"
           class="p-2.5 rounded-lg text-danger/70 dark:text-danger-dark/70 hover:text-danger dark:hover:text-danger-dark hover:bg-danger/10 dark:hover:bg-danger-dark/10 transition-all duration-200 hover:scale-110"
-          title="Delete"
-        >
+          title="Delete">
           <Trash class="h-5 w-5" />
         </button>
       </div>
@@ -76,17 +65,42 @@ import { ClipboardList, PowerOff, Power, Trash } from 'lucide-vue-next'
 import type { Employee } from '@/services/employeeService'
 import StatusBadge from './StatusBadge.vue'
 import RoleBadge from './RoleBadge.vue'
+import { useToast } from '@/composables/ui/useToast'
 
 const props = defineProps<{
   employee: Employee
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'view', id: number): void
   (e: 'activate', id: number): void
   (e: 'deactivate', id: number): void
   (e: 'delete', id: number): void
 }>()
+
+const { warning } = useToast()
+
+const handleAction = (action: 'view' | 'activate' | 'deactivate' | 'delete', id: number) => {
+  if (props.employee.email === 'employee@example.com') {
+    warning('This account cannot be edited as it is used for demo purposes only.', 'Demo Account')
+    return
+  }
+
+  switch (action) {
+    case 'view':
+      emit('view', id)
+      break
+    case 'activate':
+      emit('activate', id)
+      break
+    case 'deactivate':
+      emit('deactivate', id)
+      break
+    case 'delete':
+      emit('delete', id)
+      break
+  }
+}
 
 const displayName = computed(() => {
   if (props.employee.first_name && props.employee.last_name) {

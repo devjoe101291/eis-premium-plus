@@ -1,7 +1,10 @@
 <template>
   <aside
-    class="fixed inset-y-0 left-0 z-50 w-64 glass border-r border-gray-200/50 dark:border-gray-700/50 shadow-elegant-lg transform transition-all duration-300 ease-out lg:translate-x-0"
-    :class="{ '-translate-x-full': !isOpen, 'translate-x-0': isOpen }"
+    class="fixed inset-y-0 left-0 z-50 glass border-r border-gray-200/50 dark:border-gray-700/50 shadow-elegant-lg transform transition-all duration-300 ease-out lg:translate-x-0"
+    :class="[
+      isCollapsed ? 'w-20' : 'w-64',
+      !isOpen ? '-translate-x-full' : 'translate-x-0'
+    ]"
   >
     <div class="flex flex-col h-full">
       <!-- Logo Section -->
@@ -10,7 +13,7 @@
           <div class="h-8 w-8 flex items-center justify-center flex-shrink-0">
             <img src="@/assets/main-logo2.png" alt="Logo" class="h-5 w-5" />
           </div>
-          <h1 class="text-base sm:text-lg lg:text-xl font-bold gradient-text from-primary to-primary-hover dark:from-primary-dark dark:to-primary-dark-hover break-words text-center">
+          <h1 v-show="!isCollapsed" class="text-base sm:text-lg lg:text-xl font-bold gradient-text from-primary to-primary-hover dark:from-primary-dark dark:to-primary-dark-hover break-words text-center whitespace-nowrap overflow-hidden transition-all duration-300">
             {{ appTitle }}
           </h1>
         </div>
@@ -22,11 +25,15 @@
           v-for="item in navigation"
           :key="item.to"
           :to="item.to"
-          class="group flex items-center px-4 py-3 text-secondary-text dark:text-secondary-dark-text rounded-xl transition-all duration-300 ease-out relative overflow-hidden"
-          :class="{
-            'bg-gradient-to-r from-primary/10 via-primary/5 to-transparent dark:from-primary-dark/20 dark:via-primary-dark/10 dark:to-transparent text-primary dark:text-primary-dark shadow-sm': isActive(item.to),
-            'hover:bg-gray-100/50 dark:hover:bg-gray-700/30': !isActive(item.to)
-          }"
+          :title="isCollapsed ? item.name : undefined"
+          class="group flex items-center text-secondary-text dark:text-secondary-dark-text rounded-xl transition-all duration-300 ease-out relative overflow-hidden"
+          :class="[
+            isCollapsed ? 'justify-center px-2 py-3' : 'px-4 py-3',
+            {
+              'bg-gradient-to-r from-primary/10 via-primary/5 to-transparent dark:from-primary-dark/20 dark:via-primary-dark/10 dark:to-transparent text-primary dark:text-primary-dark shadow-sm': isActive(item.to),
+              'hover:bg-gray-100/50 dark:hover:bg-gray-700/30': !isActive(item.to)
+            }
+          ]"
         >
           <!-- Active Indicator -->
           <div
@@ -35,7 +42,7 @@
           ></div>
 
           <!-- Navigation Item Content -->
-          <div class="flex items-center space-x-3 relative z-10">
+          <div class="flex items-center space-x-3 relative z-10 w-full" :class="{ 'justify-center space-x-0': isCollapsed }">
             <div
               class="flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 ease-out"
               :class="{
@@ -53,7 +60,7 @@
                 ]"
               />
             </div>
-            <span class="text-sm font-semibold truncate ml-2">{{ item.name }}</span>
+            <span v-show="!isCollapsed" class="text-sm font-semibold truncate ml-2 whitespace-nowrap transition-all duration-300">{{ item.name }}</span>
           </div>
 
           <!-- Hover Effect -->
@@ -65,7 +72,7 @@
       </nav>
 
       <!-- Footer Section -->
-      <div class="p-4 border-t border-gray-200/50 dark:border-gray-700/50">
+      <div v-show="!isCollapsed" class="p-4 border-t border-gray-200/50 dark:border-gray-700/50 whitespace-nowrap transition-all duration-300">
         <div class="flex items-center justify-center space-x-2 text-xs text-secondary-text/70 dark:text-secondary-dark-text/70">
           <span>© {{ new Date().getFullYear() }}</span>
           <span class="w-1 h-1 rounded-full bg-secondary-text/30 dark:bg-secondary-dark-text/30"></span>
@@ -90,9 +97,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { getNavigationItems } from '@/router'
 
 // Props & Emits
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   isOpen: boolean
-}>()
+  isCollapsed?: boolean
+}>(), {
+  isCollapsed: false
+})
 
 const emit = defineEmits<{
   (e: 'update:isOpen', value: boolean): void

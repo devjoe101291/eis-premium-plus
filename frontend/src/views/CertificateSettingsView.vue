@@ -29,14 +29,6 @@
           Reset to Defaults
         </button>
 
-        <button
-          v-if="signaturePreviewUrl"
-          @click="clearSignature"
-          type="button"
-          class="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold bg-danger text-white hover:opacity-95 transition"
-        >
-          Clear Signature
-        </button>
       </div>
     </div>
 
@@ -100,7 +92,15 @@
 
                     <div class="mt-auto w-full px-6 sm:px-10 pb-2">
                       <div class="grid grid-cols-2 gap-8 sm:gap-10 items-end">
-                        <div class="text-center">
+                        <div class="text-center relative group">
+                          <button
+                            v-if="signaturePreviewUrl || signatureDataUrl"
+                            @click="clearLeftSignature"
+                            title="Clear and redraw left signature"
+                            class="absolute -top-5 right-[20%] text-xs font-semibold text-danger hover:text-danger-hover transition opacity-70 hover:opacity-100"
+                          >
+                            Clear
+                          </button>
                           <div class="h-14 flex items-end justify-center mb-2">
                             <canvas
                               ref="signatureCanvas"
@@ -127,7 +127,15 @@
                           />
                         </div>
 
-                        <div class="text-center">
+                        <div class="text-center relative group">
+                          <button
+                            v-if="rightSignatureDataUrl"
+                            @click="clearRightSignature"
+                            title="Clear and redraw right signature"
+                            class="absolute -top-5 right-[20%] text-xs font-semibold text-danger hover:text-danger-hover transition opacity-70 hover:opacity-100"
+                          >
+                            Clear
+                          </button>
                           <div class="h-14 flex items-end justify-center mb-2">
                             <canvas
                               ref="rightSignatureCanvas"
@@ -243,7 +251,9 @@ const applyContent = (content?: Partial<CertificateSettings>) => {
   rightSignatureName.value = source.rightSignatureName ?? defaults.rightSignatureName
   rightSignaturePosition.value = source.rightSignaturePosition ?? defaults.rightSignaturePosition
   rightSignatureDataUrl.value = source.rightSignatureDataUrl ?? defaults.rightSignatureDataUrl
-  dateISO.value = source.dateISO ?? defaults.dateISO
+  const today = new Date().toISOString().slice(0, 10)
+  // Always reflect the current date dynamically on load
+  dateISO.value = today
 }
 
 const initializeSignatureCanvas = () => {
@@ -454,12 +464,11 @@ const stopDrawing = () => {
   shouldRemoveSignature.value = false
 }
 
-const clearSignature = () => {
+const clearLeftSignature = () => {
   clearCanvasOnly()
   signaturePreviewUrl.value = null
   signatureDataUrl.value = null
   shouldRemoveSignature.value = true
-  clearRightSignature()
 }
 
 const loadSettings = async () => {
@@ -534,7 +543,8 @@ const saveSettings = async () => {
 }
 const resetToDefaults = () => {
   applyContent(defaults)
-  clearSignature()
+  clearLeftSignature()
+  clearRightSignature()
 }
 
 onMounted(async () => {
